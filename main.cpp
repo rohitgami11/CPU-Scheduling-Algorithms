@@ -26,6 +26,9 @@ int getArrivalTime(tuple<string, int, int>& a){
 int getServiceTime(tuple<string, int, int>& a){
     return get<2>(a);
 }
+void decrementServiceTime(tuple<string, int, int>& a){
+    get<2>(a) = get<2>(a)-1;
+}
 
 void firstComeFirstServe(){
     int time=getArrivalTime(processes[0]);
@@ -52,21 +55,20 @@ void roundRobin(){
 }
 
 void shortestProcessNext(){
-    priority_queue<pair<int,tuple<string,int,int>>>pq;
-    unordered_map<int,bool>done;
+    priority_queue<pair<int,int>,vector<pair<int,int>>,greater<pair<int,int>>>pq; //pair of service time and index
+    int j=0;
     for(int i=0;i<last_instant;i++){
-        for(int j=0;j<process_count;j++){
-            if(getArrivalTime(processes[j])<=i && !done[j]){
-                pq.push(make_pair(-getServiceTime(processes[j]),processes[j]));
-                done[j] = true;
-            }
+        for(;j<process_count;){
+            if(getArrivalTime(processes[j])<=i){
+                pq.push(make_pair(getServiceTime(processes[j]),j));
+                j++;
+            }else
+                break;
         }
         if(!pq.empty()){
-            tuple<string,int,int>process= pq.top().second;
-            string processName = getProcessName(process);
-            int arrivalTime = getArrivalTime(process);
-            int serviceTime = getServiceTime(process);
-            int processIndex = processToIndex[processName];
+            int processIndex = pq.top().second;
+            int arrivalTime = getArrivalTime(processes[processIndex]);
+            int serviceTime = getServiceTime(processes[processIndex]);
             pq.pop();
 
             int temp = arrivalTime;
@@ -86,7 +88,41 @@ void shortestProcessNext(){
 }
 
 void shortestRemainingTime(){
+    priority_queue<pair<int,int>,vector<pair<int,int>>,greater<pair<int,int>>>pq;
+    int j=0;
+    for(int i=0;i<last_instant;i++){
+        for(;j<process_count;){
+            if(getArrivalTime(processes[j])==i){
+                pq.push(make_pair(getServiceTime(processes[j]),j));
+                j++;
+            }else
+                break;
+        }
+        if(!pq.empty()){
+            int processIndex = pq.top().second;
+            int remainingTime = pq.top().first;
+            pq.pop();
+            int serviceTime = getServiceTime(processes[processIndex]);
+            int arrivalTime= getArrivalTime(processes[processIndex]);
+            timeline[i][processIndex]= '*';
 
+            if(remainingTime==1){// process finished
+                finishTime[processIndex]= i+1;
+                turnAroundTime[processIndex]= (finishTime[processIndex]-arrivalTime);
+                normTurn[processIndex]= (turnAroundTime[processIndex]*1.0/serviceTime);
+            }else{
+                pq.push(make_pair(remainingTime-1,processIndex));
+            }
+        }
+    }
+
+    for(int i=0;i<process_count;i++){
+        int arrivalTime = getArrivalTime(processes[i]);
+        for(int k=arrivalTime;k<finishTime[i];k++){
+            if(timeline[k][i]!='*')
+                timeline[k][i]='.';
+        }
+    }
 }
 
 void highestResponseRatioNext(){
@@ -106,32 +142,32 @@ void printAlgorithm(){
 }
 
 void printProcesses(){
-    cout<<"Process\t\t";
+    cout<<"Process    ";
     for(int i=0;i<process_count;i++)
         cout<<"| "<<getProcessName(processes[i])<<" ";
     cout<<"|"<<endl;
 }
 void printArrivalTime(){
-    cout<<"Arrival\t\t";
+    cout<<"Arrival    ";
     for(int i=0;i<process_count;i++)
         cout<<"| "<<getArrivalTime(processes[i])<<" ";
 
     cout<<"|"<<endl;
 }
 void printServiceTime(){
-    cout<<"Service\t\t";
+    cout<<"Service    ";
     for(int i=0;i<process_count;i++)
         cout<<"| "<<getServiceTime(processes[i])<<" ";
     cout<<"| Mean|"<<endl;
 }
 void printFinishTime(){
-    cout<<"Finish\t\t";
+    cout<<"Finish     ";
     for(int i=0;i<process_count;i++)
         cout<<"| "<<finishTime[i]<<" ";
     cout<<"|-----|"<<endl;
 }
 void printTurnAroundTime(){
-    cout<<"Turnaround\t";
+    cout<<"Turnaround ";
     int sum =0;
     for(int i=0;i<process_count;i++){
         cout<<"| "<<turnAroundTime[i]<<" ";
@@ -142,7 +178,7 @@ void printTurnAroundTime(){
 }
 
 void printNormTurn(){
-    cout<<"NormTurn\t";
+    cout<<"NormTurn   ";
     cout<<fixed<<setprecision(2);
     float sum =0;
     for(int i=0;i<process_count;i++){
@@ -181,9 +217,10 @@ void printTimeline(){
 
 int main()
 {
+    freopen("input.txt","r",stdin);
     parse();
     shortestProcessNext();
-    printStats();
+    printTimeline();
     return 0;
 }
 
