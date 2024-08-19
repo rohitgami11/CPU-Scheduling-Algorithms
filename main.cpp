@@ -428,7 +428,6 @@ void aging(int originalQuantum)
             timeline[time][currentProcess]='*';
             time++;
         }
-
         time--;
     }
 
@@ -552,7 +551,7 @@ void execute_algorithm(char algorithm_id, int quantum,string operation)
         firstComeFirstServe();
         break;
     case '2':
-        if(operation==TRACE)cout<<"RR-"<<quantum<<" ";
+        if(operation==TRACE)cout<<"RR-"<<quantum<<"  ";
         roundRobin(quantum);
         break;
     case '3':
@@ -586,8 +585,6 @@ void execute_algorithm(char algorithm_id, int quantum,string operation)
 
 int main()
 {
-    freopen("input.txt", "r", stdin);
-    //freopen("output.txt","w",stdout);
     parse();
     for (int idx = 0; idx < (int)algorithms.size(); idx++)
     {
