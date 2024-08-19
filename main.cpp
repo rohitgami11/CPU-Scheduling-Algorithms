@@ -24,6 +24,12 @@ bool descendingly_by_response_ratio(tuple<string, double, int> a, tuple<string, 
     return get<1>(a) > get<1>(b);
 }
 
+bool byPriorityLevel (const tuple<int,int,int>&a,const tuple<int,int,int>&b){
+    if(get<0>(a)==get<0>(b))
+        return get<2>(a)> get<2>(b);
+    return get<0>(a) > get<0>(b);
+}
+
 void clear_timeline()
 {
     for(int i=0; i<last_instant; i++)
@@ -42,6 +48,11 @@ int getArrivalTime(tuple<string, int, int> &a)
 }
 
 int getServiceTime(tuple<string, int, int> &a)
+{
+    return get<2>(a);
+}
+
+int getPriorityLevel(tuple<string, int, int> &a)
 {
     return get<2>(a);
 }
@@ -389,9 +400,43 @@ void feedbackQ2i()
 
 }
 
-void aging()
+void aging(int originalQuantum)
 {
+    vector<tuple<int,int,int>>v; //pair of priority level and index
+    int j=0;
+    int currentProcess=-1;
+    for(int time =0;time<last_instant;time++){
+        while(j<process_count && getArrivalTime(processes[j])<=time){
+            v.push_back(make_tuple(getPriorityLevel(processes[j]),j,0));
+            j++;
+        }
 
+        for(int i=0;i<v.size();i++){
+            if(get<1>(v[i])==currentProcess){
+                get<2>(v[i])=0;
+                get<0>(v[i])=getPriorityLevel(processes[currentProcess]);
+            }
+            else{
+                get<0>(v[i])++;
+                get<2>(v[i])++;
+            }
+
+        }
+        sort(v.begin(),v.end(),byPriorityLevel);
+        currentProcess=get<1>(v[0]);
+        timeline[time][currentProcess]='*';
+    }
+
+
+    for (int i = 0; i < process_count; i++)
+    {
+        int arrivalTime = getArrivalTime(processes[i]);
+        for (int k = arrivalTime; k < last_instant; k++)
+        {
+            if (timeline[k][i] != '*')
+                timeline[k][i] = '.';
+        }
+    }
 }
 
 void printAlgorithm(int algorithm_index)
@@ -477,14 +522,9 @@ void printStats(int algorithm_index)
 
 void printTimeline(int algorithm_index)
 {
-    int algorithm_id = algorithms[algorithm_index].first - '0';
-    if(algorithm_id==2)
-        cout << ALGORITHMS[algorithm_id] <<algorithms[algorithm_index].second<<" ";
-    else
-        cout << ALGORITHMS[algorithm_id] << " ";
     for (int i = 0; i <= last_instant; i++)
-        cout << " " << i % 10;
-    cout <<" \n";
+        cout << i % 10<<" ";
+    cout <<"\n";
     cout << "------------------------------------------------\n";
     for (int i = 0; i < process_count; i++)
     {
@@ -498,33 +538,41 @@ void printTimeline(int algorithm_index)
     cout << "------------------------------------------------\n";
 }
 
-void execute_algorithm(char algorithm_id, int quantum)
+void execute_algorithm(char algorithm_id, int quantum,string operation)
 {
     switch (algorithm_id)
     {
     case '1':
+        if(operation==TRACE)cout<<"FCFS  ";
         firstComeFirstServe();
         break;
     case '2':
+        if(operation==TRACE)cout<<"RR-"<<quantum<<" ";
         roundRobin(quantum);
         break;
     case '3':
+        if(operation==TRACE)cout<<"SPN   ";
         shortestProcessNext();
         break;
     case '4':
+        if(operation==TRACE)cout<<"SRT   ";
         shortestRemainingTime();
         break;
     case '5':
+        if(operation==TRACE)cout<<"HRRN  ";
         highestResponseRatioNext();
         break;
     case '6':
+        if(operation==TRACE)cout<<"FB-1  ";
         feedbackQ1();
         break;
     case '7':
+        if(operation==TRACE)cout<<"FB-2i ";
         feedbackQ2i();
         break;
     case '8':
-        aging();
+        if(operation==TRACE)cout<<"Aging ";
+        aging(quantum);
         break;
     default:
         break;
@@ -539,7 +587,7 @@ int main()
     for (int idx = 0; idx < (int)algorithms.size(); idx++)
     {
         clear_timeline();
-        execute_algorithm(algorithms[idx].first, algorithms[idx].second);
+        execute_algorithm(algorithms[idx].first, algorithms[idx].second,operation);
         if (operation == TRACE)
             printTimeline(idx);
         else if (operation == SHOW_STATISTICS)
