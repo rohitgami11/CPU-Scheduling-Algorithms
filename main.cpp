@@ -28,9 +28,7 @@ int getServiceTime(tuple<string, int, int>& a){
 }
 
 void firstComeFirstServe(){
-    sort(processes.begin(),processes.end(),sortByArrivalTime);
     int time=getArrivalTime(processes[0]);
-
     for(int i=0;i<processes.size();i++){
         string processName = getProcessName(processes[i]);
         int processIndex = processToIndex[processName];
@@ -47,7 +45,6 @@ void firstComeFirstServe(){
             timeline[j][processIndex]='.';
         time+=serviceTime;
     }
-    processes= defaultProcesses;
 }
 
 void roundRobin(){
@@ -55,7 +52,38 @@ void roundRobin(){
 }
 
 void shortestProcessNext(){
+    priority_queue<pair<int,tuple<string,int,int>>>pq;
+    unordered_map<int,bool>done;
+    for(int i=0;i<last_instant;i++){
+        for(int j=0;j<process_count;j++){
+            if(getArrivalTime(processes[j])<=i && !done[j]){
+                pq.push(make_pair(-getServiceTime(processes[j]),processes[j]));
+                done[j] = true;
+            }
+        }
+        if(!pq.empty()){
+            tuple<string,int,int>process= pq.top().second;
+            string processName = getProcessName(process);
+            int arrivalTime = getArrivalTime(process);
+            int serviceTime = getServiceTime(process);
+            int processIndex = processToIndex[processName];
+            pq.pop();
 
+            int temp = arrivalTime;
+            for(;temp<i;temp++)
+                timeline[temp][processIndex]='.';
+
+            temp = i;
+            for(;temp<i+serviceTime;temp++)
+                timeline[temp][processIndex]='*';
+
+            finishTime[processIndex]= (i+serviceTime);
+            turnAroundTime[processIndex]= (finishTime[processIndex]-arrivalTime);
+            normTurn[processIndex]= (turnAroundTime[processIndex]*1.0/serviceTime);
+            i =temp-1;
+            cout<<i+1<<endl;
+        }
+    }
 }
 
 void shortestRemainingTime(){
@@ -155,7 +183,7 @@ void printTimeline(){
 int main()
 {
     parse();
-    firstComeFirstServe();
+    shortestProcessNext();
     printTimeline();
     return 0;
 }
