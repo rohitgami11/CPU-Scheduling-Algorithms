@@ -40,8 +40,13 @@ void firstComeFirstServe(){
         finishTime[processIndex]= (time+serviceTime);
         turnAroundTime[processIndex]= (finishTime[processIndex]-arrivalTime);
         normTurn[processIndex]= (turnAroundTime[processIndex]*1.0/serviceTime);
+
+        for(int j = time;j<finishTime[processIndex];j++)
+            timeline[j][processIndex]='*';
+
         time+=serviceTime;
     }
+    processes= defaultProcesses;
 }
 
 void roundRobin(){
@@ -129,10 +134,14 @@ void printStats(){
     printNormTurn();
 }
 
+void printTimeline(){
+
+}
+
 int main()
 {
     parse();
-    firstComeFirstServe();
+    shortestProcessNext();
     printStats();
     return 0;
 }
