@@ -120,7 +120,7 @@ Distributed under the **MIT License**. See `LICENSE` for details.
 ## 📬 Contact
 
 **Rohit Gami**
-📧 \[[rohitgami2003@example.com](mailto:rohitgami2003@example.com)]
+📧 \[[rohitgami2003@gmail.com](mailto:rohitgami2003@gmail.com)]
 GitHub: [@rohitgami11](https://github.com/rohitgami11)
 
 ---
